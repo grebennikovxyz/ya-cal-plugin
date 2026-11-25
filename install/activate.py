@@ -100,14 +100,12 @@ def activate(codex=None):
         raise SystemExit("Unexpected Ya-Ca release directory.")
     index["plugins"][0]["source"]["path"] = "./" + plug.relative_to(base).as_posix()
     interpreter = os.path.abspath(sys.executable)
-    if os.name != "nt":
-        cfg = json.loads((plug / "mcp.json").read_bytes())
-        cfg["mcpServers"]["ya-ca"].update(
-            command=interpreter, args=["-I", "-B", "-m", "ya_cal.cli", "serve"]
-        )
-        replace_file(
-            plug / "mcp.json", json.dumps(cfg, ensure_ascii=True, indent=2).encode()
-        )
+    # Run from the verified installation. A client's plugin cache may omit runtime files.
+    cfg = json.loads((plug / "mcp.json").read_bytes())
+    cfg["mcpServers"]["ya-ca"].update(
+        command=interpreter, args=["-I", "-B", "-m", "ya_cal.cli", "serve"]
+    )
+    replace_file(plug / "mcp.json", json.dumps(cfg, indent=2).encode())
     target = base / INDEX
     before = target.read_bytes() if target.exists() else None
     replace_file(target, json.dumps(index, indent=2).encode())

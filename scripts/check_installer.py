@@ -96,8 +96,8 @@ def run(url, tmp, version):
     cached = profile / "plugins/cache/grebennikov-calendar/ya-ca" / version
     config = json.loads((cached / "mcp.json").read_bytes())["mcpServers"]["ya-ca"]
     cmd = config["command"]
-    if not os.path.isabs(cmd):
-        cmd = str((cached / cmd).resolve())
+    assert Path(cmd).is_absolute() and Path(cmd).is_relative_to(base)
+    subprocess.run([cmd, "-I", "-B", "-c", "import charset_normalizer"], check=True)
     count = asyncio.run(discover(cmd, config["args"], cached))
     cli = base / ("ya-ca.cmd" if WINDOWS else "ya-ca")
     output = json.loads(
