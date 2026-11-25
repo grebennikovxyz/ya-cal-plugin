@@ -96,7 +96,16 @@ def run(url, tmp, version):
     cached = profile / "plugins/cache/grebennikov-calendar/ya-ca" / version
     config = json.loads((cached / "mcp.json").read_bytes())["mcpServers"]["ya-ca"]
     cmd = config["command"]
-    assert Path(cmd).is_absolute() and Path(cmd).is_relative_to(base)
+    runtime = (
+        base / "versions" / f"v{version}" / "plugins/ya-ca/runtime"
+        if WINDOWS
+        else base / "envs" / f"v{version}" / "bin"
+    )
+    # Windows can return the same temp directory using an 8.3 alias.
+    assert Path(cmd).is_absolute() and Path(cmd).parent.samefile(runtime), (
+        cmd,
+        runtime,
+    )
     subprocess.run([cmd, "-I", "-B", "-c", "import charset_normalizer"], check=True)
     count = asyncio.run(discover(cmd, config["args"], cached))
     cli = base / ("ya-ca.cmd" if WINDOWS else "ya-ca")
