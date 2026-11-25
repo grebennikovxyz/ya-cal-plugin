@@ -125,9 +125,11 @@ class Store:
             )
         for item in response.tree.findall(D + "response"):
             href = destination(urljoin(base, item.findtext(D + "href") or ""))
-            if not href.startswith(base):
+            parent, name = urlsplit(href).path.rsplit("/", 1)
+            if [unquote(s) for s in parent.split("/")] != [
+                unquote(s) for s in urlsplit(base).path.rstrip("/").split("/")
+            ]:
                 raise Problem("Событие не принадлежит запрошенному календарю.")
-            name = href[len(base) :]
             child(base, name)
             for part in item.findall(D + "propstat"):
                 status = (part.findtext(D + "status") or "").split()

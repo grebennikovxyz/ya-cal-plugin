@@ -97,10 +97,26 @@ def save_change(store, key, resource, document, etag, change, messages):
     from .dav import Rejected
 
     email = store.account.email
-    if messages:
-        stage(email, key, resource, change, messages)
-    try:
+    if not messages:
         store.write(key, resource, document, etag)
+        return
+    stage(email, key, resource, change, messages)
+    try:
+        # Serialize the sendable transition with manual recovery. The intent
+        # already survived a crash, even if the server accepts the next write.
+        with database() as db:
+            db.execute("BEGIN IMMEDIATE")
+            args = (email, change)
+            if not db.execute(
+                "SELECT 1 FROM notices WHERE email=? AND change_id=? AND state='prepared'",
+                args,
+            ).fetchone():
+                raise Problem("Подготовленная рассылка уже снята.")
+            store.write(key, resource, document, etag)
+            db.execute(
+                "UPDATE notices SET state='ready' WHERE email=? AND change_id=? AND state='prepared'",
+                args,
+            )
     except Rejected:
         with database() as db:
             db.execute(
@@ -108,17 +124,16 @@ def save_change(store, key, resource, document, etag, change, messages):
                 (email, change),
             )
         raise
-    if messages:
-        ready(email, key, resource, change)
 
 
-def batch_info(email, change):
+def batch_info(email, key, resource, change):
     with database() as db:
         return [
             dict(r)
             for r in db.execute(
-                "SELECT id,method,recipient,state FROM notices WHERE email=? AND change_id=? ORDER BY rowid",
-                (email, change),
+                """SELECT id,method,recipient,state FROM notices WHERE email=? AND calendar=?
+                   AND event=? AND change_id=? ORDER BY rowid""",
+                (email, key, resource, change),
             )
         ]
 

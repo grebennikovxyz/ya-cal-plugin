@@ -87,9 +87,10 @@ def handoff(
 ):
     change = change or (("del-" if delete else "") + uuid4().hex)
     put(ev, CHANGE, change)
-    managed = str(ev.get(MANAGED, "")) == "1"
     messages = []
     selected = [ev] if single else [ev, *(e for e in doc.walk("VEVENT") if e is not ev)]
+    selected = [e for e in selected if str(e.get(MANAGED, "")) == "1"]
+    managed = bool(selected)
     if managed:
         prior = people(old) if old is not None else {}
         invited = {guest for item in selected for guest in people(item)}
@@ -115,7 +116,9 @@ def handoff(
         "event_id": resource,
         "calendar_id": key,
         "change_id": change,
-        "notifications": notices.batch_info(email, change) if messages else [],
+        "notifications": notices.batch_info(email, key, resource, change)
+        if messages
+        else [],
         "scheduling": "ya-mail" if managed else ("provider" if people(ev) else "none"),
     }
 
@@ -139,7 +142,9 @@ def create(store, key, request_id, fields, allow_conflicts):
             "event_id": resource,
             "etag": found[1],
             "change_id": change,
-            "notifications": notices.batch_info(store.account.email, change),
+            "notifications": notices.batch_info(
+                store.account.email, key, resource, change
+            ),
         }
     zone = timezone(store.account.timezone)
     doc = make_event(fields, store.account.email, str(request_id) + "@ya-cal", zone)
@@ -181,6 +186,14 @@ def update(store, key, resource, expected, fields, scope, rid, allow_conflicts):
     edit(ev, fields, store.account.email, zone)
     if ev.to_ical() == old.to_ical():
         return {"saved": True, "unchanged": True, "etag": etag, "notifications": []}
+    if fields.model_fields_set <= {"tags", "reminders_minutes"}:
+        store.write(key, resource, doc, etag)
+        return {
+            "saved": True,
+            "event_id": resource,
+            "calendar_id": key,
+            "notifications": [],
+        }
     checked = {}
     if any(v is not None for v in (fields.start, fields.end, fields.busy)):
         checked = check(
@@ -232,7 +245,7 @@ def respond(store, key, resource, expected, answer):
             "unchanged": True,
             "status": answer,
             "change_id": change,
-            "notifications": notices.batch_info(email, change),
+            "notifications": notices.batch_info(email, key, resource, change),
         }
     guest.params["PARTSTAT"] = answer
     guest.params["RSVP"] = "FALSE"
@@ -253,7 +266,7 @@ def respond(store, key, resource, expected, answer):
             "status": answer,
             "scheduling": "ya-mail",
             "change_id": change,
-            "notifications": notices.batch_info(email, change),
+            "notifications": notices.batch_info(email, key, resource, change),
         }
     store.write(key, resource, doc, etag)
     return {

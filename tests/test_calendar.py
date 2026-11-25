@@ -350,6 +350,8 @@ def test_creation_replay_never_returns_later_notification_batch(store):
     request = uuid4()
     fields = event(attendees=["guest@example.org"])
     original = server.create_event(store.account.email, "work", request, fields)
+    tagged = server.update_event(*ref(store, original), Fields(tags=["личная метка"]))
+    assert not tagged["notifications"]
     changed = server.update_event(*ref(store, original), Fields(location="новый зал"))
     replay = server.create_event(store.account.email, "work", request, fields)
     assert changed["change_id"] != replay["change_id"] == original["change_id"]
