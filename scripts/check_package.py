@@ -1,4 +1,4 @@
-"""Smoke-test the Windows archive using only its installed plugin runtime."""
+"""Verify both the standalone Windows runtime and the Agent Plugins ZIP."""
 
 import asyncio
 import json
@@ -10,9 +10,55 @@ from pathlib import Path
 from zipfile import ZipFile
 
 
-async def probe(folder):
+async def discover(command, args, folder, env=None):
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
+
+    params = StdioServerParameters(command=command, args=args, cwd=str(folder), env=env)
+    async with stdio_client(params) as (r, w), ClientSession(r, w) as client:
+        await client.initialize()
+        names = {t.name for t in (await client.list_tools()).tools}
+        assert {
+            "create_event",
+            "read_mail_invitation",
+            "send_notifications",
+            "check_availability",
+        } <= names
+        return len(names)
+
+
+def check_plugin(root, folder, version):
+    with ZipFile(root / "dist" / f"ya-ca-{version}-plugin.zip") as archive:
+        names = set(archive.namelist())
+        assert {
+            "plugin.json",
+            "mcp.json",
+            "skills/ya-ca/SKILL.md",
+            "assets/ya-ca.png",
+        } <= names
+        assert not any(name.startswith(("plugins/", ".agents/")) for name in names)
+        archive.extractall(folder)
+    manifest = json.loads((folder / "plugin.json").read_bytes())
+    interface = manifest["extensions"]["com.openai"]["interface"]
+    assert manifest["version"] == version and manifest["name"] == "ya-ca"
+    assert (
+        len(interface["shortDescription"]) <= 30
+        and (folder / interface["logo"]).is_file()
+    )
+    config = json.loads((folder / "mcp.json").read_bytes())["mcpServers"]["ya-ca"]
+    args = [arg.replace("${PLUGIN_ROOT}", str(folder)) for arg in config["args"]]
+    count = asyncio.run(
+        discover(
+            config["command"],
+            args,
+            folder.parent,
+            {"UV_CACHE_DIR": str(root / ".cache/uv")},
+        )
+    )
+    print(f"Agent Plugins archive: {count} tools")
+
+
+async def probe(folder):
     from ya_mail.accounts import SERVICE as MAIL_SERVICE
 
     from ya_cal import accounts
@@ -26,22 +72,8 @@ async def probe(folder):
     config = json.loads((folder / "mcp.json").read_bytes())["mcpServers"]["ya-ca"]
     exe = (folder / config["command"]).resolve()
     assert exe == Path(sys.executable).resolve()
-    async with (
-        stdio_client(StdioServerParameters(command=str(exe), args=config["args"])) as (
-            r,
-            w,
-        ),
-        ClientSession(r, w) as client,
-    ):
-        await client.initialize()
-        names = {t.name for t in (await client.list_tools()).tools}
-        assert {
-            "create_event",
-            "read_mail_invitation",
-            "send_notifications",
-            "check_availability",
-        } <= names
-        print(f"Standalone MCP: {len(names)} tools")
+    count = await discover(str(exe), config["args"], folder)
+    print(f"Standalone MCP: {count} tools")
 
 
 if __name__ == "__main__":
@@ -53,6 +85,9 @@ if __name__ == "__main__":
             "version"
         ]
         with tempfile.TemporaryDirectory() as tmp:
+            check_plugin(root, Path(tmp) / "Ya Ca #Plugin", version)
+            if sys.platform != "win32":
+                sys.exit(0)
             dest = Path(tmp) / "Ya Ca Package"
             with ZipFile(root / "dist" / f"ya-ca-{version}-windows-x64.zip") as bundle:
                 bundle.extractall(dest)

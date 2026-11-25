@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,6 +16,31 @@ from ya_cal import accounts, dav, wizard
 from ya_cal.events import NewEvent, make_event
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_client_launch_configs(capsys, monkeypatch):
+    from ya_cal.cli import main
+
+    for client in ("claude-code", "claude-desktop", "cursor", "gemini", "vscode"):
+        monkeypatch.setattr(sys, "argv", ["ya-ca", "mcp-config", client])
+        main()
+        config = json.loads(capsys.readouterr().out)
+        group = "servers" if client == "vscode" else "mcpServers"
+        assert list(config) == [group]
+        launch = config[group]["ya-ca"]
+        assert launch["command"] == os.path.abspath(sys.executable)
+        assert launch["args"] == ["-I", "-B", "-m", "ya_cal.cli", "serve"]
+        assert launch.get("type") == ("stdio" if client == "vscode" else None)
+
+    async def check():
+        params = StdioServerParameters(command=launch["command"], args=launch["args"])
+        async with stdio_client(params) as (r, w), ClientSession(r, w) as session:
+            await session.initialize()
+            assert "list_accounts" in {
+                t.name for t in (await session.list_tools()).tools
+            }
+
+    asyncio.run(check())
 
 
 def test_plugin_manifest_and_stdio(tmp_path):

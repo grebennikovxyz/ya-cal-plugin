@@ -1,5 +1,7 @@
 import argparse
 import json
+import os
+import sys
 
 from ya_mail.accounts import Problem
 
@@ -15,6 +17,13 @@ def main():
         cmd.add_argument("--desktop-only", action="store_true", help=argparse.SUPPRESS)
     subs.add_parser("status")
     subs.add_parser("serve")
+    config = subs.add_parser(
+        "mcp-config", help="Показать JSON для подключения локального MCP-клиента"
+    )
+    config.add_argument(
+        "client",
+        choices=("claude-code", "claude-desktop", "cursor", "gemini", "vscode"),
+    )
     subs.add_parser("disconnect").add_argument("email")
     try:
         args = parser.parse_args()
@@ -22,6 +31,17 @@ def main():
             from .server import mcp
 
             mcp.run()
+        elif args.action == "mcp-config":
+            # Keep the venv interpreter path, including a symlink on Linux.
+            server = {
+                "command": os.path.abspath(sys.executable),
+                "args": ["-I", "-B", "-m", "ya_cal.cli", "serve"],
+            }
+            group = "mcpServers"
+            if args.client == "vscode":
+                group = "servers"
+                server["type"] = "stdio"
+            print(json.dumps({group: {"ya-ca": server}}, indent=2))
         elif args.action == "status":
             print(json.dumps(accounts.profiles(), ensure_ascii=False, indent=2))
         elif args.action == "disconnect":

@@ -1,4 +1,4 @@
-"""Build the installable marketplace and (optionally) a Windows standalone copy."""
+"""Build a single-plugin ZIP, Codex marketplace and optional Windows standalone."""
 
 import argparse
 import hashlib
@@ -45,6 +45,33 @@ def build(runtime=None):
         check=True,
     )
     marketplace = ".agents/plugins/marketplace.json"
+    plugin_zip = DIST / f"ya-ca-{VERSION}-plugin.zip"
+    with ZipFile(plugin_zip, "w", ZIP_DEFLATED) as archive:
+        archive.write(PLUGIN / "plugin.json", "plugin.json")
+        add_tree(archive, PLUGIN / "assets", "assets/")
+        add_tree(archive, PLUGIN / "skills", "skills/")
+        for doc in ("LICENSE", "NOTICE"):
+            archive.write(ROOT / doc, doc)
+        archive.write(wheel, wheel.name)
+        config = json.loads((PLUGIN / "mcp.json").read_bytes())
+        config["mcpServers"]["ya-ca"].update(
+            command="uv",
+            args=[
+                "run",
+                "--directory",
+                "${PLUGIN_ROOT}",
+                "--no-project",
+                "--python",
+                "3.13",
+                "--with",
+                "./" + wheel.name,
+                "ya-ca",
+                "serve",
+            ],
+        )
+        archive.writestr("mcp.json", json.dumps(config, indent=2))
+    outputs = [wheel, plugin_zip]
+    print(plugin_zip)
     for standalone in [False, True] if runtime else [False]:
         output = DIST / (
             f"ya-ca-{VERSION}" + ("-windows-x64" if standalone else "") + ".zip"
@@ -118,13 +145,13 @@ def build(runtime=None):
                     archive.writestr(script, source)
             archive.writestr(prefix + "mcp.json", json.dumps(config, indent=2))
         print(output)
+        outputs.append(output)
     with (DIST / "SHA256SUMS.txt").open("w", encoding="utf-8", newline="\n") as stream:
-        for path in sorted(DIST.iterdir()):
-            if path.suffix in {".zip", ".whl"}:
-                with path.open("rb") as src:
-                    stream.write(
-                        f"{hashlib.file_digest(src, 'sha256').hexdigest()}  {path.name}\n"
-                    )
+        for path in sorted(outputs):
+            with path.open("rb") as src:
+                stream.write(
+                    f"{hashlib.file_digest(src, 'sha256').hexdigest()}  {path.name}\n"
+                )
 
 
 if __name__ == "__main__":

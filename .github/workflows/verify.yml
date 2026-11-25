@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install . pytest
+      - run: python -m pip install . pytest uv
       - if: runner.os == 'Windows'
         run: python -m pytest -q
         env:
@@ -26,13 +26,16 @@ jobs:
         name: Build and verify installable archives
         shell: pwsh
         run: |
-          python -m pip install uv
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           uv python install cpython-3.13-windows-x86_64-none --install-dir .cache/runtime --no-bin --no-registry
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $runtime = (Get-ChildItem .cache/runtime -Directory -Filter 'cpython-3.13.*-windows-x86_64-none').FullName
           python scripts/package.py --windows-runtime $runtime
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python scripts/check_package.py
+      - if: runner.os == 'Linux'
+        name: Check the portable plugin on Linux
+        run: |
+          python scripts/package.py
           python scripts/check_package.py
       - if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4

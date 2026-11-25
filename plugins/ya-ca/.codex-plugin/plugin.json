@@ -1,6 +1,6 @@
 {
   "name": "ya-ca",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Неофициальный плагин для Яндекс Календаря с CalDAV и приглашениями через Ya-Mail.",
   "author": {
     "name": "Антон Гребенников"
@@ -12,7 +12,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Ya-Ca",
-    "shortDescription": "Календарь, свободные окна и приглашения",
+    "shortDescription": "Календарь и приглашения",
     "developerName": "Антон Гребенников",
     "category": "Productivity",
     "brandColor": "#086361",
