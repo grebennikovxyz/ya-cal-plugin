@@ -1,0 +1,20 @@
+{
+  "name": "grebennikov-calendar",
+  "interface": {
+    "displayName": "Grebennikov Calendar"
+  },
+  "plugins": [
+    {
+      "name": "ya-ca",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ya-ca"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
