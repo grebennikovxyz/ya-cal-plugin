@@ -3,7 +3,7 @@
 [![Boosty](https://img.shields.io/badge/Boosty-F15F2C?style=flat&logo=boosty&logoColor=white)](https://boosty.to/grebennikov.xyz/donate)<br>
 <https://boosty.to/grebennikov.xyz/donate>
 
-[![Версия плагина](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgrebennikovxyz%2Fya-cal-plugin%2Fmain%2Fplugins%2Fya-ca%2Fplugin.json&query=%24.version&label=version&color=007ec6)](https://github.com/grebennikovxyz/ya-cal-plugin/blob/main/plugins/ya-ca/plugin.json)
+[![Стабильная версия](https://img.shields.io/github/v/release/grebennikovxyz/ya-cal-plugin?label=version&color=007ec6)](https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest)
 [![Лицензия](https://img.shields.io/github/license/grebennikovxyz/ya-cal-plugin?label=license&color=d4a600)](https://github.com/grebennikovxyz/ya-cal-plugin/blob/main/LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/grebennikovxyz/ya-cal-plugin?style=social)](https://github.com/grebennikovxyz/ya-cal-plugin/stargazers)
 [![Сборка и тесты](https://github.com/grebennikovxyz/ya-cal-plugin/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/grebennikovxyz/ya-cal-plugin/actions/workflows/verify.yml)
@@ -14,36 +14,54 @@ Ya-Ca подключает Яндекс Календарь к локальном
 
 > «Найди в четверг свободный час с 10 до 16 по рабочему и личному календарям. Поставь встречу в рабочий календарь и пригласи участников».
 
-## Быстрый старт
+## Установка одной командой
 
-1. Скачайте **ya-ca-packages** в разделе **Artifacts** последней успешной сборки ветки `main`. GitHub может попросить войти для скачивания. Распакуйте скачанный файл, затем выбранный внутренний ZIP в постоянную папку. [Сборки на GitHub Actions](https://github.com/grebennikovxyz/ya-cal-plugin/actions/workflows/verify.yml?query=branch%3Amain)
+Откройте терминал под тем же пользователем, который запускает Codex. Команда скачивает текущий стабильный релиз, проверяет SHA-256 и регистрирует Ya-Ca в установленном Codex.
 
-   | Файл внутри | Для чего |
-   | --- | --- |
-   | `ya-ca-<версия>-windows-x64.zip` | Windows x64. Python и зависимости уже в комплекте. |
-   | `ya-ca-<версия>.zip` | Windows или Linux с установленным `uv`. Включает Python-пакет Ya-Ca, мастер и каталог для Codex. |
-   | `ya-ca-<версия>-plugin.zip` | Один плагин в формате Agent Plugins 1.0 для Plugin Creator и клиентов с локальным исполнителем. |
+**Windows x64 — PowerShell**
 
-   Вместо архива можно клонировать репозиторий и установить [uv](https://docs.astral.sh/uv/getting-started/installation/).
+```powershell
+irm https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/ya-ca-latest.ps1 | iex
+```
 
-2. Запустите мастер из распакованной папки или клона. В Windows откройте `connect.cmd`, в Linux выполните `sh connect.sh`. Для терминала добавьте `--terminal`. Мастер сам перейдёт в текстовый режим, если графическое окно недоступно. В Linux для сохранения входа нужен разблокированный Secret Service в пользовательской D-Bus-сессии. Codex или другой клиент запускайте от того же пользователя.
+**Linux — терминал**
 
-3. В мастере откройте Яндекс ID, выберите **Безопасность → Пароли приложений → Календарь (CalDAV)** и создайте пароль с именем `Ya-Ca`. Введите в мастере полный email и созданный пароль, выберите часовой пояс и права. Режим **«Чтение и редактирование»** позволяет создавать и переносить события. После проверки мастер покажет число календарей. Пароль Яндекс показывает один раз, он действует до отзыва. [Пароли приложений](https://id.yandex.ru/security/app-passwords) · [Справка Яндекса](https://yandex.ru/support/yandex-360/customers/calendar/web/ru/data-exchange/synchronization/sync-desktop)
+```sh
+curl -fsSL https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/ya-ca-latest.sh | sh
+```
 
-4. Для рассылки приглашений откройте **«Мастер Ya-Mail»** на последнем шаге и подключите тот же email с правом отправки. Уже подключённый профиль Ya-Mail используется автоматически. В терминале мастер почты доступен через `ya-ca connect-mail --terminal`. Если используете автономную Windows-сборку, вместо команды `ya-ca` запускайте из папки распаковки `.\plugins\ya-ca\runtime\python.exe -I -B -m ya_cal.cli`.
+В Windows Python входит в комплект. В Linux нужны `curl`, `sha256sum` и `flock`. Установщик использует существующий `uv` или загружает его в папку Ya-Ca и готовит Python 3.13. Установка выполняется с правами обычного пользователя. Чтобы обновиться, повторите ту же команду. Подключённые аккаунты и разрешения хранятся отдельно от программы.
+
+**Первый вход.** В новом чате Codex выберите Ya-Ca и попросите «Подключи мой календарь». Мастер откроет Яндекс ID. Выберите **Безопасность → Пароли приложений → Календарь (CalDAV)**, создайте пароль с именем `Ya-Ca` и вставьте его в локальное окно. Укажите полный email, часовой пояс и разрешения. Когда подключение готово, попросите показать события на завтра. [Пароли приложений](https://id.yandex.ru/security/app-passwords) · [Справка Яндекса](https://yandex.ru/support/yandex-360/customers/calendar/web/ru/data-exchange/synchronization/sync-desktop)
+
+Для приглашений подключите тот же адрес в мастере Ya-Mail с правом отправки. Для текстового режима используйте `connect --terminal`, для подключения почты — `connect-mail --terminal`. Установщик выводит путь к команде Ya-Ca.
+
+| Система | Как открыть текстовый мастер после установки |
+| --- | --- |
+| Windows, PowerShell | `& "$env:LOCALAPPDATA\Ya-Ca\ya-ca.cmd" connect --terminal` |
+| Linux | `"${XDG_DATA_HOME:-$HOME/.local/share}/ya-ca/ya-ca" connect --terminal` |
+
+В Linux пароль сохраняется в разблокированном Secret Service пользовательской D-Bus-сессии. Для графического окна нужен Tk.
+
+## Скачать файлы вручную
+
+Постоянные ссылки ведут на файлы последней стабильной версии. На странице конкретного релиза доступны те же файлы и их контрольные суммы. [Все релизы](https://github.com/grebennikovxyz/ya-cal-plugin/releases)
+
+| Файл | Назначение |
+| --- | --- |
+| [ya-ca-latest-windows-x64.zip](https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/ya-ca-latest-windows-x64.zip) | Автономная сборка Windows x64. Распакуйте и запустите `connect.cmd`. |
+| [ya-ca-latest.zip](https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/ya-ca-latest.zip) | Переносимый каталог Codex для Windows и Linux с `uv`. Запустите `connect.cmd` или `sh connect.sh`. |
+| [ya-ca-latest-plugin.zip](https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/ya-ca-latest-plugin.zip) | Один плагин Agent Plugins 1.0 для Plugin Creator и локальных исполнителей. |
+| [SHA256SUMS.txt](https://github.com/grebennikovxyz/ya-cal-plugin/releases/latest/download/SHA256SUMS.txt) | Контрольные суммы архивов, установщиков и wheel. |
 
 ## Подключение агента
 
-Если у вас уже установлена версия 0.1.0 через `uv`, обновите её из нового клона командой `uv tool install --force --python 3.13 .`. Для переносимого архива укажите путь к распакованному файлу `.whl` вместо точки. Для автономной сборки распакуйте новый Windows ZIP и используйте интерпретатор из него. Сохранённые аккаунты доступны текущему пользователю ОС.
-
-**Codex.** Из папки клона или распакованного каталога с `.agents/plugins/marketplace.json` выполните:
+При установке одной командой Ya-Ca появляется в Codex автоматически, если доступна команда `codex` или приложение Codex для Windows со встроенным CLI. При ручной установке из каталога или исходников выполните из папки с `.agents/plugins/marketplace.json`:
 
 ```sh
 codex plugin marketplace add .
 codex plugin add ya-ca@grebennikov-calendar
 ```
-
-После установки через `uv` перезапустите Codex, чтобы он получил обновлённый PATH. В новом чате попросите: «Покажи, какие календари у меня подключены».
 
 **Claude Code, Claude Desktop, Cursor, Gemini CLI и VS Code.** Команда ниже выводит JSON с абсолютным путём к установленному интерпретатору и аргументами запуска. Выберите свой клиент в таблице и добавьте запись `ya-ca` в соответствующий раздел настроек, сохранив остальные серверы.
 
@@ -51,10 +69,10 @@ codex plugin add ya-ca@grebennikov-calendar
 ya-ca mcp-config cursor
 ```
 
-Для автономной сборки Windows та же команда выглядит так:
+После установки одной командой в Windows используйте:
 
 ```powershell
-.\plugins\ya-ca\runtime\python.exe -I -B -m ya_cal.cli mcp-config cursor
+& "$env:LOCALAPPDATA\Ya-Ca\ya-ca.cmd" mcp-config cursor
 ```
 
 | Клиент | Аргумент `mcp-config` | Куда добавить запись |
@@ -67,7 +85,7 @@ ya-ca mcp-config cursor
 
 Перезапустите или перезагрузите MCP-сервер в клиенте. Для Claude Code состояние подключения показывает `claude mcp list`, для Gemini CLI — `gemini mcp list`. Через чат вызовите `list_accounts`, затем `list_calendars` с выбранным адресом. Другие локальные клиенты MCP могут запустить `ya-ca serve` как дочерний процесс по stdio. Пароли в JSON-конфигурации не нужны.
 
-**Plugin Creator.** Выберите архив с суффиксом `-plugin.zip`. В его корне лежат `plugin.json`, `mcp.json`, навык, иконка и wheel Ya-Ca. Локальный исполнитель должен поддерживать stdio, подстановку `${PLUGIN_ROOT}` и команду `uv` в PATH. При первом старте `uv` устанавливает зависимости из сети. Вход доступен через инструмент `open_connection_wizard`. Для работы в веб-клиенте без локального исполнителя потребовалось бы отдельное удалённое подключение.
+**Plugin Creator.** Выберите `ya-ca-latest-plugin.zip`. В его корне лежат `plugin.json`, `mcp.json`, навык, иконка и wheel Ya-Ca. Локальный исполнитель должен поддерживать stdio, подстановку `${PLUGIN_ROOT}` и команду `uv` в PATH. При первом старте `uv` устанавливает зависимости из сети. Вход доступен через инструмент `open_connection_wizard`. Для работы в веб-клиенте без локального исполнителя потребовалось бы отдельное удалённое подключение.
 
 ## Что умеет Ya-Ca
 

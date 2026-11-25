@@ -81,6 +81,7 @@ def build(runtime=None):
             ZipFile(output, "w", ZIP_DEFLATED) as archive,
         ):
             archive.write(ROOT / marketplace, marketplace)
+            archive.write(ROOT / "install/activate.py", "activate.py")
             prefix = "plugins/ya-ca/"
             for path in sorted(PLUGIN.rglob("*")):
                 if path.is_file() and path.name != "mcp.json":

@@ -37,8 +37,59 @@ jobs:
         run: |
           python scripts/package.py
           python scripts/check_package.py
+      - name: Verify one-command install and repeat install
+        shell: bash
+        run: |
+          npm install --global @openai/codex@0.172.0
+          python scripts/check_installer.py
       - if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: ya-ca-packages
           path: dist/
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: ya-ca-packages
+          path: dist/
+      - name: Publish verified stable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          output="$RUNNER_TEMP/ya-ca-release"
+          python scripts/release_assets.py "$GITHUB_REF_NAME" dist "$output"
+          if draft=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft); then
+            if [ "$draft" = false ]; then exit 0; fi
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "Ya-Ca $GITHUB_REF_NAME" --notes-file install/RELEASE.md
+          fi
+          gh release upload "$GITHUB_REF_NAME" "$output"/* --clobber
+          release_id=$(gh release view "$GITHUB_REF_NAME" --json databaseId --jq .databaseId)
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false -f make_latest=legacy --silent
+
+  public-install:
+    needs: release
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install 'mcp>=1.30,<2'
+      - run: npm install --global @openai/codex@0.172.0
+      - run: python scripts/check_installer.py --published

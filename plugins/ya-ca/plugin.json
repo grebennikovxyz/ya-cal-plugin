@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "ya-ca",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Неофициальный плагин для Яндекс Календаря с CalDAV и приглашениями через Ya-Mail.",
   "author": {
     "name": "Антон Гребенников"
