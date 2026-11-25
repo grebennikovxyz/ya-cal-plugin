@@ -1,0 +1,26 @@
+{
+  "name": "ya-ca",
+  "version": "0.1.1",
+  "description": "Неофициальный плагин для Яндекс Календаря с CalDAV и приглашениями через Ya-Mail.",
+  "author": {
+    "name": "Антон Гребенников"
+  },
+  "repository": "https://github.com/grebennikovxyz/ya-cal-plugin",
+  "license": "Apache-2.0",
+  "requires_local_executor": true,
+  "mcpServers": "./mcp.json",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Ya-Ca",
+    "shortDescription": "Календарь и приглашения",
+    "developerName": "Антон Гребенников",
+    "category": "Productivity",
+    "brandColor": "#086361",
+    "logo": "./assets/ya-ca.png",
+    "composerIcon": "./assets/ya-ca.png",
+    "defaultPrompt": [
+      "Покажи мою повестку по всем календарям на завтра",
+      "Найди свободный час и пригласи участников через Ya-Mail"
+    ]
+  }
+}

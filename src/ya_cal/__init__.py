@@ -1,0 +1,1 @@
+"""Local Yandex Calendar plugin."""
