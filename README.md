@@ -1,5 +1,13 @@
 # Ya-Ca
 
+[![Boosty](https://img.shields.io/badge/Boosty-F15F2C?style=flat&logo=boosty&logoColor=white)](https://boosty.to/grebennikov.xyz/donate)<br>
+<https://boosty.to/grebennikov.xyz/donate>
+
+[![Версия плагина](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgrebennikovxyz%2Fya-cal-plugin%2Fmain%2Fplugins%2Fya-ca%2Fplugin.json&query=%24.version&label=version&color=007ec6)](https://github.com/grebennikovxyz/ya-cal-plugin/blob/main/plugins/ya-ca/plugin.json)
+[![Лицензия](https://img.shields.io/github/license/grebennikovxyz/ya-cal-plugin?label=license&color=d4a600)](https://github.com/grebennikovxyz/ya-cal-plugin/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/grebennikovxyz/ya-cal-plugin?style=social)](https://github.com/grebennikovxyz/ya-cal-plugin/stargazers)
+[![Сборка и тесты](https://github.com/grebennikovxyz/ya-cal-plugin/actions/workflows/verify.yml/badge.svg?branch=main)](https://github.com/grebennikovxyz/ya-cal-plugin/actions/workflows/verify.yml)
+
 <img src="plugins/ya-ca/assets/ya-ca.png" alt="Лист календаря с датой 8 jun и расширением .ics" width="96" align="right">
 
 Ya-Ca подключает Яндекс Календарь к локальному ИИ-агенту через MCP. Агент видит расписание по всем календарям выбранного аккаунта, ищет свободное время и помогает договориться о встрече. Приглашения, переносы, отмены и ответы участников можно отправлять из того же ящика через [Ya-Mail](https://github.com/grebennikovxyz/ya-mail-plugin).
