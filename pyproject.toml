@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "grebennikov-ya-ca"
-version = "0.1.2"
+version = "0.1.3"
 description = "Яндекс Календарь и приглашения Ya-Mail для локальных MCP-клиентов"
 requires-python = ">=3.13"
 readme = "README.md"

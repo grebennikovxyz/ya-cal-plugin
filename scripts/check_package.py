@@ -77,7 +77,12 @@ async def probe(folder):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
+    if sys.argv[1:] == ["--marketplace"]:
+        plugin = Path(__file__).resolve().parents[1] / "plugins/ya-ca"
+        entry = json.loads((plugin / "mcp.json").read_bytes())["mcpServers"]["ya-ca"]
+        count = asyncio.run(discover(entry["command"], entry["args"], plugin))
+        print(f"Published marketplace MCP: {count} tools")
+    elif len(sys.argv) > 1:
         asyncio.run(probe(Path(sys.argv[1])))
     else:
         root = Path(__file__).resolve().parents[1]

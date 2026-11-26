@@ -14,6 +14,35 @@ Ya-Ca подключает Яндекс Календарь к локальном
 
 > «Найди в четверг свободный час с 10 до 16 по рабочему и личному календарям. Поставь встречу в рабочий календарь и пригласи участников».
 
+## Установка из маркетплейса
+
+Для установки из GitHub нужны Git и `uvx` в PATH на компьютере, где работает агент. При первом обращении к календарю `uvx` загружает Python 3.13 и опубликованный пакет той же версии, что и плагин. Если в Windows нужен вариант со встроенным Python, используйте установщик из следующего раздела. [Установка uv и uvx](https://docs.astral.sh/uv/getting-started/installation/)
+
+**Codex**
+
+```sh
+codex plugin marketplace add grebennikovxyz/ya-cal-plugin
+codex plugin add ya-ca@grebennikov-calendar
+```
+
+**Claude Code**
+
+```sh
+claude plugin marketplace add grebennikovxyz/ya-cal-plugin
+claude plugin install ya-ca@grebennikov-calendar
+```
+
+**OpenClaw**
+
+```sh
+openclaw plugins install ya-ca --marketplace grebennikovxyz/ya-cal-plugin
+openclaw skills info ya-ca
+```
+
+Откройте новую сессию и попросите «Подключи мой календарь». OpenClaw получает и навык `ya-ca`, и инструменты MCP. Отдельный текст навыка можно установить из клона командой `openclaw skills install ./plugins/ya-ca/skills/ya-ca`, если сервер Ya-Ca уже подключён.
+
+Для обновления каталога Claude Code выполните `claude plugin marketplace update grebennikov-calendar`, затем `claude plugin update ya-ca@grebennikov-calendar`. В Codex для GitHub-каталога используйте `codex plugin marketplace upgrade grebennikov-calendar`, затем повторите `codex plugin add ya-ca@grebennikov-calendar`. Для OpenClaw повторите команду установки с `--force`, чтобы заменить установленную копию. Если Ya-Ca установлен из релиза одной командой, для обновления повторите именно её.
+
 ## Установка одной командой
 
 Откройте терминал под тем же пользователем, который запускает Codex. Команда скачивает текущий стабильный релиз, проверяет SHA-256 и регистрирует Ya-Ca в установленном Codex.
@@ -118,4 +147,10 @@ uv run --python 3.13 python scripts/package.py
 
 В `dist/` появятся wheel, ZIP для Plugin Creator, переносимый каталог Codex и SHA-256 текущей сборки. Для автономного Windows x64 добавьте к команде сборки `--windows-runtime ПУТЬ` к чистой Windows x64 сборке CPython 3.13 от python-build-standalone. В CI выполняются протокольные тесты с синтетическими данными и проверяется запуск собранного пакета. Вход в Яндекс и доставка реальному адресату требуют отдельной проверки с тестовыми аккаунтами.
 
-Ya-Ca — независимый проект. Товарный знак «Яндекс» принадлежит ООО «ЯНДЕКС». [Лицензия Apache 2.0](LICENSE) · [Уведомления](NOTICE)
+### Выпуск новой версии
+
+Измените `project.version` в `pyproject.toml`, выполните `python scripts/sync_marketplaces.py` и закоммитьте результат. Скрипт обновит манифесты Codex, Claude Code и Agent Plugins, версию навыка OpenClaw и ссылку MCP на wheel. Claude Code и OpenClaw читают один каталог GitHub. CI проверяет согласованность версий и установку из каталога перед публикацией.
+
+Отправьте тег `vX.Y.Z` для этого коммита. GitHub Actions выпустит архивы, проверит установку публичной версии на Windows и Linux и опубликует `SKILL.md` в ClawHub с той же версией и тегом `latest`. Для ClawHub задайте один раз секрет репозитория `CLAWHUB_TOKEN` с правом публикации. Сбой публикации виден в задаче `clawhub`. После исправления повторите упавшую задачу в GitHub Actions. PickAPlugin рассматривает заявку редакционно и перечитывает свои публичные источники ежедневно. [Правила PickAPlugin](https://pickaplugin.com/submit)
+
+Ya-Ca — независимый проект. Товарный знак «Яндекс» принадлежит ООО «ЯНДЕКС». Код и иконка распространяются под Apache-2.0. Для текста навыка в ClawHub также доступна MIT-0. [Лицензия Apache 2.0](LICENSE) · [MIT-0](https://spdx.org/licenses/MIT-0.html) · [Уведомления](NOTICE)

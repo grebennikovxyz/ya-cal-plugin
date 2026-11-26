@@ -1,0 +1,14 @@
+{
+  "name": "grebennikov-calendar",
+  "description": "Неофициальный плагин для Яндекс Календаря с CalDAV и приглашениями через Ya-Mail.",
+  "owner": {
+    "name": "Антон Гребенников"
+  },
+  "plugins": [
+    {
+      "name": "ya-ca",
+      "source": "./plugins/ya-ca",
+      "description": "Неофициальный плагин для Яндекс Календаря с CalDAV и приглашениями через Ya-Mail."
+    }
+  ]
+}

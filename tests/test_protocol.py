@@ -52,7 +52,7 @@ def test_plugin_manifest_and_stdio(tmp_path):
     config = json.loads((plug / manifest["mcpServers"]).read_bytes())["mcpServers"][
         "ya-ca"
     ]
-    assert config == {"type": "stdio", "command": "ya-ca", "args": ["serve"]}
+    assert config["type"] == "stdio" and config["args"][-2:] == ["ya-ca", "serve"]
     script = (
         "import sys;from pathlib import Path;from ya_cal import accounts;from ya_mail import accounts as mail;"
         "p=Path(sys.argv.pop(1));accounts.DATA=p/'cal';mail.DATA=p/'mail';from ya_cal.cli import main;main()"
@@ -60,7 +60,7 @@ def test_plugin_manifest_and_stdio(tmp_path):
 
     async def check():
         params = StdioServerParameters(
-            command=sys.executable, args=["-c", script, str(tmp_path), *config["args"]]
+            command=sys.executable, args=["-c", script, str(tmp_path), "serve"]
         )
         async with (
             stdio_client(params) as (reader, writer),

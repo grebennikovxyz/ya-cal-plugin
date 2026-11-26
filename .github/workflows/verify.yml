@@ -1,5 +1,5 @@
 name: Verify Ya-Ca
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
@@ -49,8 +49,8 @@ jobs:
           path: dist/
 
   release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
-    needs: verify
+    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    needs: [verify, marketplaces]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -90,6 +90,76 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install 'mcp>=1.30,<2'
+      - run: python -m pip install 'mcp>=1.30,<2' uv
       - run: npm install --global @openai/codex@0.172.0
       - run: python scripts/check_installer.py --published
+      - run: python scripts/check_package.py --marketplace
+
+  marketplaces:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python scripts/sync_marketplaces.py --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --global @anthropic-ai/claude-code@2.1.332 openclaw@2026.11.10
+      - name: Install through the Claude Code marketplace
+        run: |
+          export CLAUDE_CONFIG_DIR="$(mktemp -d)"
+          claude plugin validate ./plugins/ya-ca
+          claude plugin validate .
+          claude plugin marketplace add "$GITHUB_WORKSPACE"
+          claude plugin install ya-ca@grebennikov-calendar
+          claude plugin list --json | jq -e --arg version "$(python scripts/sync_marketplaces.py --check)" 'any(.[]; .id == "ya-ca@grebennikov-calendar" and .enabled and .version == $version and .mcpServers["ya-ca"].command == "uvx")'
+      - name: Install the bundle and discover the calendar skill in OpenClaw
+        run: |
+          export OPENCLAW_STATE_DIR="$(mktemp -d)"
+          export OPENCLAW_CONFIG_PATH="$OPENCLAW_STATE_DIR/openclaw.json"
+          openclaw plugins marketplace list "$GITHUB_WORKSPACE"
+          openclaw plugins install ya-ca --marketplace "$GITHUB_WORKSPACE" --force
+          openclaw skills info ya-ca --json | jq -e '.name == "ya-ca"'
+
+  clawhub:
+    needs: [release, public-install]
+    runs-on: ubuntu-latest
+    concurrency: ya-ca-clawhub-publication
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --global clawhub@0.27.0
+      - name: Publish only the MIT-0 skill at the stable release version
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)" != "$GITHUB_REF_NAME" ]]; then
+            echo "A newer stable release owns the latest tag."; exit 0
+          fi
+          : "${CLAWHUB_TOKEN:?Configure the publisher token in GitHub Actions secrets}"
+          export CLAWHUB_CONFIG_PATH="$RUNNER_TEMP/ya-ca-clawhub-config"
+          trap 'rm -f "$CLAWHUB_CONFIG_PATH"' EXIT
+          clawhub login --token "$CLAWHUB_TOKEN"
+          owner=$(curl -fsS -H "Authorization: Bearer $CLAWHUB_TOKEN" https://clawhub.ai/api/v1/whoami | jq -er .user.handle)
+          version="${GITHUB_REF_NAME#v}"
+          source=plugins/ya-ca/skills/ya-ca
+          skill="$RUNNER_TEMP/clawhub/ya-ca"
+          mkdir -p "$skill"
+          cp "$source/SKILL.md" "$skill/"
+          status=$(curl -sS -G "https://clawhub.ai/api/v1/skills/ya-ca/versions/$version" --data-urlencode "ownerHandle=$owner" -o "$RUNNER_TEMP/existing.json" -w '%{http_code}')
+          case "$status" in
+            200)
+              sha=$(sha256sum "$skill/SKILL.md" | cut -d' ' -f1)
+              jq -e --arg sha "$sha" '.version.files | length == 1 and .[0].path == "SKILL.md" and .[0].sha256 == $sha' "$RUNNER_TEMP/existing.json"
+              ;;
+            404)
+              clawhub skill publish "$skill" --slug ya-ca --owner "$owner" --name Ya-Ca --version "$version" --tags latest --changelog "Ya-Ca $GITHUB_REF_NAME" --source-repo "$GITHUB_REPOSITORY" --source-ref "$GITHUB_REF_NAME" --source-commit "$GITHUB_SHA" --source-path "$source"
+              ;;
+            *) echo "ClawHub version lookup returned HTTP $status"; exit 1 ;;
+          esac

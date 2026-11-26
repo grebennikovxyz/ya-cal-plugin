@@ -2,11 +2,11 @@
 
 import argparse
 import hashlib
-import json
 import re
 import shutil
-import tomllib
 from pathlib import Path
+
+from sync_marketplaces import sync
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = "https://github.com/grebennikovxyz/ya-cal-plugin/releases/download"
@@ -27,21 +27,9 @@ def render_installer(tag, filename, url, checksum):
 
 
 def prepare(tag, dist, output):
-    version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
-        "project"
-    ]["version"]
-    plugin = ROOT / "plugins/ya-ca"
-    if (
-        not re.fullmatch(r"v\d+\.\d+\.\d+", tag)
-        or tag != f"v{version}"
-        or any(
-            json.loads(path.read_bytes())["version"] != version
-            for path in (plugin / "plugin.json", plugin / ".codex-plugin/plugin.json")
-        )
-    ):
-        raise ValueError(
-            "A stable tag must match the version in the wheel and both manifests."
-        )
+    version = sync()
+    if not re.fullmatch(r"v\d+\.\d+\.\d+", tag) or tag != f"v{version}":
+        raise ValueError("A stable tag must match the synchronized project version.")
     checksums = {
         name: sha
         for sha, name in (
