@@ -97,6 +97,8 @@ jobs:
 
   marketplaces:
     runs-on: ubuntu-latest
+    env:
+      MARKETPLACE_SOURCE: ${{ github.ref == 'refs/heads/main' && github.repository || github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -106,21 +108,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - run: npm install --global @anthropic-ai/claude-code@2.1.332 openclaw@2026.11.10
+      - run: npm install --global @anthropic-ai/claude-code@2.1.332 @openai/codex@0.172.0 openclaw@2026.11.10
+      - name: Install through the Codex marketplace
+        run: |
+          export CODEX_HOME="$(mktemp -d)"
+          codex plugin marketplace add "$MARKETPLACE_SOURCE"
+          codex plugin add ya-ca@grebennikov-calendar
+          version=$(python scripts/sync_marketplaces.py --check)
+          cmp "plugins/ya-ca/mcp.json" "$CODEX_HOME/plugins/cache/grebennikov-calendar/ya-ca/$version/mcp.json"
       - name: Install through the Claude Code marketplace
         run: |
           export CLAUDE_CONFIG_DIR="$(mktemp -d)"
           claude plugin validate ./plugins/ya-ca
           claude plugin validate .
-          claude plugin marketplace add "$GITHUB_WORKSPACE"
+          claude plugin marketplace add "$MARKETPLACE_SOURCE"
           claude plugin install ya-ca@grebennikov-calendar
           claude plugin list --json | jq -e --arg version "$(python scripts/sync_marketplaces.py --check)" 'any(.[]; .id == "ya-ca@grebennikov-calendar" and .enabled and .version == $version and .mcpServers["ya-ca"].command == "uvx")'
       - name: Install the bundle and discover the calendar skill in OpenClaw
         run: |
           export OPENCLAW_STATE_DIR="$(mktemp -d)"
           export OPENCLAW_CONFIG_PATH="$OPENCLAW_STATE_DIR/openclaw.json"
-          openclaw plugins marketplace list "$GITHUB_WORKSPACE"
-          openclaw plugins install ya-ca --marketplace "$GITHUB_WORKSPACE" --force --accept-capabilities
+          openclaw plugins marketplace list "$MARKETPLACE_SOURCE"
+          openclaw plugins install ya-ca --marketplace "$MARKETPLACE_SOURCE" --force --accept-capabilities
           openclaw skills info ya-ca --json | jq -e '.name == "ya-ca"'
 
   clawhub:
@@ -163,3 +172,4 @@ jobs:
               ;;
             *) echo "ClawHub version lookup returned HTTP $status"; exit 1 ;;
           esac
+          echo "ClawHub publisher: [@$owner/ya-ca](https://clawhub.ai/$owner/skills/ya-ca), version $version." >> "$GITHUB_STEP_SUMMARY"
