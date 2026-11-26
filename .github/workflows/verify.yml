@@ -120,7 +120,7 @@ jobs:
           export OPENCLAW_STATE_DIR="$(mktemp -d)"
           export OPENCLAW_CONFIG_PATH="$OPENCLAW_STATE_DIR/openclaw.json"
           openclaw plugins marketplace list "$GITHUB_WORKSPACE"
-          openclaw plugins install ya-ca --marketplace "$GITHUB_WORKSPACE" --force
+          openclaw plugins install ya-ca --marketplace "$GITHUB_WORKSPACE" --force --accept-capabilities
           openclaw skills info ya-ca --json | jq -e '.name == "ya-ca"'
 
   clawhub:

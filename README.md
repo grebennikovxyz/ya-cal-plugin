@@ -34,8 +34,10 @@ claude plugin install ya-ca@grebennikov-calendar
 
 **OpenClaw**
 
+Команда разрешает OpenClaw запустить локальный MCP-сервер Ya-Ca. Доступ к календарю и отправку через Ya-Mail вы настраиваете отдельно в мастере подключения.
+
 ```sh
-openclaw plugins install ya-ca --marketplace grebennikovxyz/ya-cal-plugin
+openclaw plugins install ya-ca --marketplace grebennikovxyz/ya-cal-plugin --accept-capabilities
 openclaw skills info ya-ca
 ```
 
