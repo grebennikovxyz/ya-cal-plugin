@@ -16,23 +16,25 @@ Ya-Ca подключает Яндекс Календарь к локальном
 
 ## Установка из маркетплейса
 
-Для установки из GitHub нужны Git и `uvx` в PATH на компьютере, где работает агент. При первом обращении к календарю `uvx` загружает Python 3.13 и опубликованный пакет той же версии, что и плагин. Если в Windows нужен вариант со встроенным Python, используйте установщик из следующего раздела. [Установка uv и uvx](https://docs.astral.sh/uv/getting-started/installation/)
+**Для первого подключения** установите плагин из GitHub командами своего клиента. В него входят локальный календарный MCP-сервер и навык Ya-Ca. Если MCP-сервер уже подключён к OpenClaw, можно добавить [отдельный навык из ClawHub](#навык-openclaw-из-clawhub).
 
-**Codex**
+Для установки из GitHub в терминале должны быть доступны Git, `uvx` и команда выбранного клиента. При первом запуске `uvx` подготавливает Python 3.13 и скачивает пакет Ya-Ca из соответствующего GitHub Release. Для Windows также доступен установщик со встроенным Python. [Установка uv и uvx](https://docs.astral.sh/uv/getting-started/installation/) · [Установка одной командой](#установка-одной-командой)
+
+### Codex из GitHub
 
 ```sh
 codex plugin marketplace add grebennikovxyz/ya-cal-plugin
 codex plugin add ya-ca@grebennikov-calendar
 ```
 
-**Claude Code**
+### Claude Code из GitHub
 
 ```sh
 claude plugin marketplace add grebennikovxyz/ya-cal-plugin
 claude plugin install ya-ca@grebennikov-calendar
 ```
 
-**OpenClaw**
+### OpenClaw из GitHub
 
 Команда разрешает OpenClaw запустить локальный MCP-сервер Ya-Ca. Доступ к календарю и отправку через Ya-Mail вы настраиваете отдельно в мастере подключения.
 
@@ -41,9 +43,26 @@ openclaw plugins install ya-ca --marketplace grebennikovxyz/ya-cal-plugin --acce
 openclaw skills info ya-ca
 ```
 
-Откройте новую сессию и попросите «Подключи мой календарь». OpenClaw получает и навык `ya-ca`, и инструменты MCP. Отдельный текст навыка можно установить из клона командой `openclaw skills install ./plugins/ya-ca/skills/ya-ca`, если сервер Ya-Ca уже подключён.
+После установки плагина из GitHub откройте новую сессию в своём клиенте и попросите «Подключи мой календарь».
 
-Для обновления каталога Claude Code выполните `claude plugin marketplace update grebennikov-calendar`, затем `claude plugin update ya-ca@grebennikov-calendar`. В Codex для GitHub-каталога используйте `codex plugin marketplace upgrade grebennikov-calendar`, затем повторите `codex plugin add ya-ca@grebennikov-calendar`. Для OpenClaw повторите команду установки с `--force`, чтобы заменить установленную копию. Если Ya-Ca установлен из релиза одной командой, для обновления повторите именно её.
+### Навык OpenClaw из ClawHub
+
+Если OpenClaw уже видит инструменты MCP-сервера Ya-Ca, установите навык в рабочее пространство агента. Он подскажет агенту, как искать свободное время, менять события и отправлять приглашения. [Ya-Ca в ClawHub](https://clawhub.ai/grebennikovxyz/skills/ya-ca)
+
+```sh
+openclaw skills install @grebennikovxyz/ya-ca
+```
+
+Проверить установку можно командой `openclaw skills info ya-ca`. В чате навык вызывается командой `/skill ya-ca`. Если у вас уже есть локальный клон репозитория, навык также можно установить из его корня командой `openclaw skills install ./plugins/ya-ca/skills/ya-ca`.
+
+### Обновление из маркетплейса
+
+| Откуда установлен Ya-Ca | Как обновить |
+| --- | --- |
+| Codex · GitHub | Выполните `codex plugin marketplace upgrade grebennikov-calendar`, затем `codex plugin add ya-ca@grebennikov-calendar`. |
+| Claude Code · GitHub | Выполните `claude plugin marketplace update grebennikov-calendar`, затем `claude plugin update ya-ca@grebennikov-calendar`. |
+| OpenClaw · GitHub | Повторите `openclaw plugins install ya-ca --marketplace grebennikovxyz/ya-cal-plugin --accept-capabilities --force`. |
+| OpenClaw · ClawHub | Выполните `openclaw skills update @grebennikovxyz/ya-ca`. |
 
 ## Установка одной командой
 
